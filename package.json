@@ -1,6 +1,6 @@
 {
   "name": "aframe-curve-component",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A Curve component to draw curves with some extras in A-Frame.",
   "main": "index.js",
   "cdn": "dist/aframe-curve-component.min.js",
@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/protyze/aframe-curve-component#readme",
   "devDependencies": {
-    "aframe": "^0.4.0",
+    "aframe": "^0.5.0",
     "browserify": "^13.0.0",
     "budo": "^8.2.2",
     "chai": "^3.4.1",

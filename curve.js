@@ -1,12 +1,4 @@
-/* global AFRAME */
-
-if (typeof AFRAME === 'undefined') {
-    throw new Error('Component attempted to register before AFRAME was available.');
-}
-
-/**
- * Curve component for A-Frame to deal with spline curves
- */
+/* For dealing with spline curves */
 
 var __tempVector1 = new THREE.Vector3();
 var __tempVector2 = new THREE.Vector3();
@@ -25,7 +17,7 @@ AFRAME.registerComponent('curve-point', {
         this.el.emit("curve-point-change");
     },
 
-    changeHandler: function (event) {
+    changeHandler: function(event) {
         if (event.detail.name == "position") {
             this.el.emit("curve-point-change");
         }
@@ -49,7 +41,7 @@ AFRAME.registerComponent('curve', {
         }
     },
 
-    init: function () {
+    init: function() {
     },
 
     update: function () {
@@ -279,8 +271,11 @@ AFRAME.registerPrimitive('a-curve-point', {
     defaultComponents: {
         'curve-point': {},
     },
-    mappings: {}
+    mappings: {
+
+    }
 });
+
 
 AFRAME.registerPrimitive('a-curve', {
     defaultComponents: {

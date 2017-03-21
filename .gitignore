@@ -1,0 +1,8 @@
+**.DS_Store
+**Icon?
+/.idea/*
+examples/build.js
+examples/node_modules/
+node_modules/
+npm-debug.log
+gh-pages
