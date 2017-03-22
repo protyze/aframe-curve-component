@@ -96,16 +96,13 @@
 	    },
 
 	    init: function () {
+	        this.pathPoints = null;
 	    },
 
-	    update: function () {
+	    update: function (oldData) {
 	        this.remove();
 
-	        this.el.addEventListener("curve-point-change", this.update.bind(this));
-
 	        this.points = Array.from(this.el.querySelectorAll("a-curve-point, [curve-point]"));
-
-	        this.threeConstructor = THREE[this.data.type + 'Curve3'];
 
 	        if (this.points.length <= 1) {
 	            console.warn("At least 2 curve-points needed to draw a curve");
@@ -113,7 +110,7 @@
 	            return;
 	        }
 
-	        var points = this.points.map(function (a) {
+	        var pointsArray = this.points.map(function (a) {
 	            if (a.x !== undefined && a.y !== undefined && a.z !== undefined) {
 	                return a;
 	            }
@@ -123,20 +120,37 @@
 	            return a.object3D.getWorldPosition()
 	        });
 
+	        if (this.pathPoints) {
+	            var newPath = this.pointPositionsString(pointsArray);
+	            var oldPath = this.pointPositionsString(this.pathPoints);
+
+	            // TODO: don't retun when TYPE has changed
+	            if (newPath == oldPath) {
+	                // Path didn't change, nothing to do.
+	                return;
+	            }
+	        }
+
+	        this.pathPoints = pointsArray;
+
+	        this.threeConstructor = THREE[this.data.type + 'Curve3'];
+
 	        // apply the points as ags to the Beziers
 	        if (this.data.type.match(/QuadraticBezier|CubicBezier|Line/)) {
-	            this.curve = (Function.prototype.bind.apply(this.threeConstructor, points));
+	            this.curve = (Function.prototype.bind.apply(this.threeConstructor, this.pathPoints));
 	        } else {
 	            if (!this.threeConstructor) {
 	                this.pause();
 	                throw ('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
 	            }
-	            this.curve = new this.threeConstructor(points);
+	            this.curve = new this.threeConstructor(this.pathPoints);
 	        }
 
 	        this.curve.closed = this.data.closed;
 
 	        this.el.emit('curve-updated');
+
+	        this.el.addEventListener("curve-point-change", this.update.bind(this));
 
 	        this.ready = true;
 	    },
@@ -146,7 +160,7 @@
 	        this.points = null;
 	        this.ready = false;
 
-	        this.el.addEventListener("curve-point-change", this.update.bind(this));
+	        this.el.removeEventListener("curve-point-change", this.update.bind(this));
 	    },
 
 	    closestPointInLocalSpace: function closestPoint(point, resolution, testPoint, currentRes) {
@@ -179,6 +193,21 @@
 	            return this.closestPointInLocalSpace(point, resolution, bTest, currentRes);
 	        }
 	    },
+
+	    pointPositionsString: function(pointVectors) {
+	        if (pointVectors) {
+	            var pointPositionString = "";
+
+	            for (var i = 0; i < pointVectors.length; i++) {
+	                pointPositionString += AFRAME.utils.coordinates.stringify(pointVectors[i]);
+	            }
+
+	            return pointPositionString;
+	        } else {
+	            return "";
+	        }
+	    }
+
 	});
 
 
@@ -236,7 +265,7 @@
 	    },
 
 	    remove: function () {
-
+	        this.data.curve.removeEventListener('curve-updated', this.update.bind(this));
 	        this.el.getObject3D('mesh').geometry = new THREE.Geometry();
 	    }
 
