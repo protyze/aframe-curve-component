@@ -1,6 +1,6 @@
 {
   "name": "aframe-curve-component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Curve component to draw curves with some extras in A-Frame.",
   "main": "index.js",
   "cdn": "dist/aframe-curve-component.min.js",
