@@ -12,10 +12,6 @@ if (typeof AFRAME === 'undefined') {
 /**
  * Curve component for A-Frame to deal with spline curves
  */
-
-var __tempVector1 = new THREE.Vector3();
-var __tempVector2 = new THREE.Vector3();
-var up = new THREE.Vector3(0, 1, 0);
 var zAxis = new THREE.Vector3(0, 0, 1);
 var degToRad = THREE.Math.degToRad;
 
@@ -46,7 +42,7 @@ AFRAME.registerComponent('curve', {
         type: {
             type: 'string',
             default: 'CatmullRom',
-            oneOf: ['CatmullRom', 'Spline', 'CubicBezier', 'QuadraticBezier', 'Line']
+            oneOf: ['CatmullRom', 'CubicBezier', 'QuadraticBezier', 'Line']
         },
         closed: {
             type: 'boolean',
@@ -56,74 +52,62 @@ AFRAME.registerComponent('curve', {
 
     init: function () {
         this.pathPoints = null;
+        this.curve = null;
+
+        this.el.addEventListener("curve-point-change", this.update.bind(this));
     },
 
     update: function (oldData) {
-        this.remove();
 
         this.points = Array.from(this.el.querySelectorAll("a-curve-point, [curve-point]"));
 
         if (this.points.length <= 1) {
             console.warn("At least 2 curve-points needed to draw a curve");
             this.curve = null;
-            return;
-        }
-
-        var pointsArray = this.points.map(function (a) {
-            if (a.x !== undefined && a.y !== undefined && a.z !== undefined) {
-                return a;
-            }
-
-            // flush position information to object 3D
-            a.updateComponent('position');
-            return a.object3D.getWorldPosition()
-        });
-
-        if (this.pathPoints) {
-            var newPath = this.pointPositionsString(pointsArray);
-            var oldPath = this.pointPositionsString(this.pathPoints);
-
-            // TODO: don't retun when TYPE has changed
-            if (newPath == oldPath) {
-                // Path didn't change, nothing to do.
-                return;
-            }
-        }
-
-        this.pathPoints = pointsArray;
-
-        this.threeConstructor = THREE[this.data.type + 'Curve3'];
-
-        // apply the points as ags to the Beziers
-        if (this.data.type.match(/QuadraticBezier|CubicBezier|Line/)) {
-            this.curve = (Function.prototype.bind.apply(this.threeConstructor, this.pathPoints));
         } else {
-            if (!this.threeConstructor) {
-                this.pause();
-                throw ('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
+            // Get Array of Positions from Curve-Points
+            var pointsArray = this.points.map(function (point) {
+
+                if (point.x !== undefined && point.y !== undefined && point.z !== undefined) {
+                    return point;
+                }
+
+                // Flush position information to object3D
+                point.updateComponent('position');
+
+                return point.object3D.getWorldPosition();
+            });
+
+            // Update the Curve if either the Curve-Points or other Properties changed
+            if (!AFRAME.utils.deepEqual(pointsArray, this.pathPoints) || (oldData !== 'CustomEvent' && !AFRAME.utils.deepEqual(this.data, oldData))) {
+                this.curve = null;
+
+                this.pathPoints = pointsArray;
+
+                // TODO: Make other Curve-Types work
+                //this.threeConstructor = THREE[this.data.type + 'Curve3'];
+                this.threeConstructor = THREE['CatmullRomCurve3'];
+
+                if (!this.threeConstructor) {
+                    throw new Error('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
+                }
+
+                // Create Curve
+                this.curve = new this.threeConstructor(this.pathPoints);
+                this.curve.closed = this.data.closed;
+
+                this.el.emit('curve-updated');
             }
-            this.curve = new this.threeConstructor(this.pathPoints);
         }
 
-        this.curve.closed = this.data.closed;
-
-        this.el.emit('curve-updated');
-
-        this.el.addEventListener("curve-point-change", this.update.bind(this));
-
-        this.ready = true;
     },
 
     remove: function () {
-        this.curve = null;
-        this.points = null;
-        this.ready = false;
-
         this.el.removeEventListener("curve-point-change", this.update.bind(this));
     },
 
     closestPointInLocalSpace: function closestPoint(point, resolution, testPoint, currentRes) {
-        if (!this.ready) throw Error('Curve not instantiated yet.');
+        if (!this.curve) throw Error('Curve not instantiated yet.');
         resolution = resolution || 0.1 / this.curve.getLength();
         currentRes = currentRes || 0.5;
         testPoint = testPoint || 0.5;
@@ -151,22 +135,7 @@ AFRAME.registerComponent('curve', {
         } else {
             return this.closestPointInLocalSpace(point, resolution, bTest, currentRes);
         }
-    },
-
-    pointPositionsString: function(pointVectors) {
-        if (pointVectors) {
-            var pointPositionString = "";
-
-            for (var i = 0; i < pointVectors.length; i++) {
-                pointPositionString += AFRAME.utils.coordinates.stringify(pointVectors[i]);
-            }
-
-            return pointPositionString;
-        } else {
-            return "";
-        }
     }
-
 });
 
 
