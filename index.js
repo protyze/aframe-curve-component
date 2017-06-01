@@ -70,7 +70,17 @@ AFRAME.registerComponent('curve', {
                 // Flush position information to object3D
                 point.updateComponent('position');
 
-                return point.object3D.getWorldPosition();
+                // This does not work: I think the updateComponent call is not actaully creating or updating any Object3d.
+                // This oject3d is always at 0,0,0.
+                //return point.object3D.getWorldPosition();
+                
+                // So I introduce this way instead:
+                let tmp = point.attributes['position'].value.split(' ');
+                var x = new THREE.Object3D();
+                x.position.x = tmp[0];
+                x.position.y = tmp[1];
+                x.position.z = tmp[2];
+                return x.getWorldPosition();
             });
 
             // Update the Curve if either the Curve-Points or other Properties changed
