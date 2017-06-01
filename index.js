@@ -39,6 +39,10 @@ AFRAME.registerComponent('curve', {
             default: 'CatmullRom',
             oneOf: ['CatmullRom', 'CubicBezier', 'QuadraticBezier', 'Line']
         },
+        relPoints :{
+            type: 'boolean',
+            default: false
+        },
         closed: {
             type: 'boolean',
             default: false
@@ -60,18 +64,30 @@ AFRAME.registerComponent('curve', {
             console.warn("At least 2 curve-points needed to draw a curve");
             this.curve = null;
         } else {
-            // Get Array of Positions from Curve-Points
-            var pointsArray = this.points.map(function (point) {
+                // Get Array of Positions from Curve-Points
+                var pointsArray = [];
+                for (var k=0; k<this.points.length; k++){
+                    let tmp = this.points[k].attributes['position'].value.trim().split(' ');
+                    if (tmp.length==2) tmp[2] = "0"; // Add a Z=0 coordinate if not specified
 
-                if (point.x !== undefined && point.y !== undefined && point.z !== undefined) {
-                    return point;
+                    // Make point relative to previous one?
+                    if (this.data.relPoints && k>0) {
+                        tmp[0] = pointsArray[k-1].x + tmp[0]*1; 
+                        tmp[1] = pointsArray[k-1].y + tmp[1]*1;
+                        tmp[2] = pointsArray[k-1].z + tmp[2]*1; 
+                    } else {
+                        if (tmp[0].startsWith('+')) tmp[0] = pointsArray[k-1].x + tmp[0].substring(1)*1; // Set x relative to the previous point.
+                        if (tmp[1].startsWith('+')) tmp[1] = pointsArray[k-1].y + tmp[1].substring(1)*1; // Set y relative to the previous point.
+                        if (tmp[2].startsWith('+')) tmp[2] = pointsArray[k-1].z + tmp[2].substring(1)*1; // Set z relative to the previous point.
+                    } 
+
+                    var x = new THREE.Object3D();
+                    x.position.x = tmp[0]*1;
+                    x.position.y = tmp[1]*1;
+                    x.position.z = tmp[2]*1;
+                    pointsArray.push(x.getWorldPosition());
                 }
 
-                // Flush position information to object3D
-                point.updateComponent('position');
-
-                return point.object3D.getWorldPosition();
-            });
 
             // Update the Curve if either the Curve-Points or other Properties changed
             if (!AFRAME.utils.deepEqual(pointsArray, this.pathPoints) || (oldData !== 'CustomEvent' && !AFRAME.utils.deepEqual(this.data, oldData))) {
@@ -287,5 +303,6 @@ AFRAME.registerPrimitive('a-curve', {
 
     mappings: {
         type: 'curve.type',
+        relpoints: 'curve.relPoints',
     }
 });
