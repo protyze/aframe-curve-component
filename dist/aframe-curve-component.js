@@ -42,7 +42,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* global AFRAME */
 
@@ -113,9 +113,6 @@
 	                    return point;
 	                }
 
-	                // Flush position information to object3D
-	                point.updateComponent('position');
-
 	                return point.object3D.getWorldPosition();
 	            });
 
@@ -181,6 +178,7 @@
 
 
 	var tempQuaternion = new THREE.Quaternion();
+
 	function normalFromTangent(tangent) {
 	    var lineEnd = new THREE.Vector3(0, 1, 0);
 	    tempQuaternion.setFromUnitVectors(zAxis, tangent);
@@ -337,5 +335,5 @@
 	});
 
 
-/***/ }
+/***/ })
 /******/ ]);
