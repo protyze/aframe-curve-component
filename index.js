@@ -80,27 +80,27 @@ AFRAME.registerComponent('curve', {
                 switch (this.data.type) {
                     case 'CubicBezier':
                         if (this.pathPoints.length != 4) {
-                            throw new Error('No Three constructor of type CubicBezierCurve3 requires 4 points');
+                            throw new Error('The Three constructor of type CubicBezierCurve3 requires 4 points');
                         }
                         this.curve = new THREE.CubicBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2], this.pathPoints[3]);
                         break;
                     case 'QuadraticBezier':
                         if (this.pathPoints.length != 3) {
-                            throw new Error('No Three constructor of type QuadraticBezierCurve3 requires 3 points');
+                            throw new Error('The Three constructor of type QuadraticBezierCurve3 requires 3 points');
                         }
                         this.curve = new THREE.QuadraticBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2]);
+                        break;
+                    case 'Line':
+                        if (this.pathPoints.length != 2) {
+                            throw new Error('The Three constructor of type LineCurve3 requires 2 points');
+                        }
+                        this.curve = new THREE.LineCurve3(this.pathPoints[0], this.pathPoints[1]);
                         break;
                     case 'CatmullRom':
                         this.curve = new THREE.CatmullRomCurve3(this.pathPoints);
                         break;
                     case 'Spline':
-                        this.curve = new THREE.CatmullRomCurve3(this.pathPoints);
-                        break;
-                    case 'Line':
-                        if (this.pathPoints.length != 2) {
-                            throw new Error('No Three constructor of type LineCurve3 requires 2 points');
-                        }
-                        this.curve = new THREE.CatmullRomCurve3(this.pathPoints[0], this.pathPoints[1]);
+                        this.curve = new THREE.SplineCurve3(this.pathPoints);
                         break;
                     default:
                         throw new Error('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
