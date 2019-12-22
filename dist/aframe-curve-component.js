@@ -122,16 +122,36 @@
 
 	                this.pathPoints = pointsArray;
 
-	                // TODO: Make other Curve-Types work
-	                //this.threeConstructor = THREE[this.data.type + 'Curve3'];
-	                this.threeConstructor = THREE['CatmullRomCurve3'];
-
-	                if (!this.threeConstructor) {
-	                    throw new Error('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
+	                // Create Curve
+	                switch (this.data.type) {
+	                    case 'CubicBezier':
+	                        if (this.pathPoints.length != 4) {
+	                            throw new Error('No Three constructor of type CubicBezierCurve3 requires 4 points');
+	                        }
+	                        this.curve = new THREE.CubicBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2], this.pathPoints[3]);
+	                        break;
+	                    case 'QuadraticBezier':
+	                        if (this.pathPoints.length != 3) {
+	                            throw new Error('No Three constructor of type QuadraticBezierCurve3 requires 3 points');
+	                        }
+	                        this.curve = new THREE.QuadraticBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2]);
+	                        break;
+	                    case 'CatmullRom':
+	                        this.curve = new THREE.CatmullRomCurve3(this.pathPoints);
+	                        break;
+	                    case 'Spline':
+	                        this.curve = new THREE.CatmullRomCurve3(this.pathPoints);
+	                        break;
+	                    case 'Line':
+	                        if (this.pathPoints.length != 2) {
+	                            throw new Error('No Three constructor of type LineCurve3 requires 2 points');
+	                        }
+	                        this.curve = new THREE.CatmullRomCurve3(this.pathPoints[0], this.pathPoints[1]);
+	                        break;
+	                    default:
+	                        throw new Error('No Three constructor of type (case sensitive): ' + this.data.type + 'Curve3');
 	                }
 
-	                // Create Curve
-	                this.curve = new this.threeConstructor(this.pathPoints);
 	                this.curve.closed = this.data.closed;
 
 	                this.el.emit('curve-updated');
@@ -218,14 +238,11 @@
 	        }
 
 	        if (this.curve && this.curve.curve) {
+	            var lineGeometry = new THREE.BufferGeometry().setFromPoints(this.curve.curve.getPoints(this.curve.curve.getPoints().length * 10));
 	            var mesh = this.el.getOrCreateObject3D('mesh', THREE.Line);
-
 	            lineMaterial = mesh.material ? mesh.material : new THREE.LineBasicMaterial({
 	                color: "#ff0000"
 	            });
-
-	            var lineGeometry = new THREE.Geometry();
-	            lineGeometry.vertices = this.curve.curve.getPoints(this.curve.curve.points.length * 10);
 
 	            this.el.setObject3D('mesh', new THREE.Line(lineGeometry, lineMaterial));
 	        }
