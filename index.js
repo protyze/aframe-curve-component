@@ -67,7 +67,7 @@ AFRAME.registerComponent('curve', {
                     return point;
                 }
 
-                return point.object3D.getWorldPosition();
+                return point.object3D.getWorldPosition(point.object3D.position);
             });
 
             // Update the Curve if either the Curve-Points or other Properties changed
@@ -79,20 +79,23 @@ AFRAME.registerComponent('curve', {
                 // Create Curve
                 switch (this.data.type) {
                     case 'CubicBezier':
-                        if (this.pathPoints.length != 4) {
-                            throw new Error('The Three constructor of type CubicBezierCurve3 requires 4 points');
+                        if (this.pathPoints.length !== 4) {
+                            console.warn('The Three constructor of type CubicBezierCurve3 requires 4 points');
+                            return;
                         }
                         this.curve = new THREE.CubicBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2], this.pathPoints[3]);
                         break;
                     case 'QuadraticBezier':
-                        if (this.pathPoints.length != 3) {
-                            throw new Error('The Three constructor of type QuadraticBezierCurve3 requires 3 points');
+                        if (this.pathPoints.length !== 3) {
+                            console.warn('The Three constructor of type QuadraticBezierCurve3 requires 3 points');
+                            return;
                         }
                         this.curve = new THREE.QuadraticBezierCurve3(this.pathPoints[0], this.pathPoints[1], this.pathPoints[2]);
                         break;
                     case 'Line':
-                        if (this.pathPoints.length != 2) {
-                            throw new Error('The Three constructor of type LineCurve3 requires 2 points');
+                        if (this.pathPoints.length !== 2) {
+                            console.warn('The Three constructor of type LineCurve3 requires 2 points');
+                            return;
                         }
                         this.curve = new THREE.LineCurve3(this.pathPoints[0], this.pathPoints[1]);
                         break;
@@ -166,11 +169,11 @@ AFRAME.registerShader('line', {
     },
 
     init: function (data) {
-        this.material = new THREE.LineBasicMaterial(data);
+        this.material = new THREE.LineBasicMaterial({color: data.color});
     },
 
     update: function (data) {
-        this.material = new THREE.LineBasicMaterial(data);
+        this.material = new THREE.LineBasicMaterial({color: data.color});
     },
 });
 
@@ -193,8 +196,8 @@ AFRAME.registerComponent('draw-curve', {
 
         if (this.curve && this.curve.curve) {
             var lineGeometry = new THREE.BufferGeometry().setFromPoints(this.curve.curve.getPoints(this.curve.curve.getPoints().length * 10));
-            var mesh = this.el.getOrCreateObject3D('mesh', THREE.Line);
-            lineMaterial = mesh.material ? mesh.material : new THREE.LineBasicMaterial({
+            var mesh = this.el.getObject3D('mesh');
+            var lineMaterial = mesh && mesh.material ? mesh.material : new THREE.LineBasicMaterial({
                 color: "#ff0000"
             });
 
@@ -218,11 +221,11 @@ AFRAME.registerComponent('clone-along-curve', {
         spacing: {default: 1},
         rotation: {
             type: 'vec3',
-            default: '0 0 0'
+            default: {x: 0, y: 0, z: 0}
         },
         scale: {
             type: 'vec3',
-            default: '1 1 1'
+            default: {x: 1, y: 1, z: 1}
         }
     },
 
@@ -245,7 +248,8 @@ AFRAME.registerComponent('clone-along-curve', {
             var start = 0;
             var counter = start;
 
-            var cloneMesh = this.el.getOrCreateObject3D('clones', THREE.Group);
+            this.el.setObject3D('clones', new THREE.Group());
+            var cloneMesh = this.el.getObject3D('clones')
 
             var parent = new THREE.Object3D();
             mesh.scale.set(this.data.scale.x, this.data.scale.y, this.data.scale.z);
